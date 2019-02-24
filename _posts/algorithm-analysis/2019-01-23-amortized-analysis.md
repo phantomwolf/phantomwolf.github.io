@@ -92,4 +92,12 @@ c<sub>i</sub>' = c<sub>i</sub> + P(D<sub>i</sub>) - P(D<sub>i-1</sub>) = k' - k'
 #### 二进制计数器递增1
 定义势能函数P(D<sub>i</sub>)为计数器中1的个数。由于计数器中1的数量始终为非负，且P(D<sub>0</sub>)为0，因此对任意i，都有P(D<sub>i</sub>) >= P(D<sub>0</sub>) = 0，可知总平摊代价为总实际代价的一个上界。
 
-我们来计算INCREMENT操作的平摊代价。设第i次INCREMENT操作对t<sub>i</sub>个位进行了复位(置为0)，该操作的实际代价至多是t<sub>i</sub>+1，因为除了将t<sub>i</sub>个位复位外，它至多将1个位设为1。
+定义第i次INCREMENT操作后计数器的势能为b<sub>i</sub>，即第i次操作后计数器中1的个数。我们来计算INCREMENT操作的平摊代价。设第i次INCREMENT操作对t<sub>i</sub>个位进行了复位(置为0)，该操作的实际代价至多是t<sub>i</sub>+1，因为除了将t<sub>i</sub>个位复位外，它至多将1个位设为1。如果b<sub>i</sub>=0，那么第i个操作复位k个位，则b<sub>i-1</sub>=t<sub>i</sub>=k。如果b<sub>i</sub>>0，则b<sub>i</sub>=b<sub>i-1</sub>-t<sub>i</sub>+1。在这两种情况中，都有b<sub>i</sub><=b<sub>i-1</sub>-t<sub>i</sub>+1，而且势能差为：
+
+P(D<sub>i</sub>) - P(D<sub>i-1</sub) <= 1 - t<sub>i</sub>
+
+因此平摊代价为：
+
+c<sub>i</sub>' = c<sub>i</sub> + P(D<sub>i</sub>) - P(D<sub>i-1</sub) <= t<sub>i</sub> + 1 + 1 - t<sub>i</sub> = 2
+
+可见，INCREMENT操作的平摊代价为常数。因此，任意n次INCREMENT操作的总代价为O(n)。
