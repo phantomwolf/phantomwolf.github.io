@@ -1,4 +1,11 @@
-# WSL2 configuration
+---
+layout: post
+title: "WSL2 configuration"
+date: 2023-08-04 12:00:00 +0800
+categories: Windows
+---
+Setup WSL2 Ubuntu 22.04 development environment with GUI and audio
+
 ## GUI
 2 GUI options:
 - WSLg by Microsoft(recommended)
