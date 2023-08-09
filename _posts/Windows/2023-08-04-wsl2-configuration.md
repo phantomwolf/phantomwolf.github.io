@@ -32,7 +32,7 @@ WESTON_RDP_DEBUG_DESKTOP_SCALING_FACTOR=200
 ```
 
 ### VcXsrv
-First of all, download and install VcXsrv.
+First of all, download and install VcXsrv. Find vcxsrv.exe, right click -> properties -> compatibility mode > override high DPI > Application.
 
 Write a PowerShell script to start VcXsrv and WSL: C:\Users\<UserName>\start-wsl.ps1
 
@@ -62,6 +62,11 @@ export GDK_SCALE=2
 ```
 
 Run `source ~/.bashrc` and try start a GUI app, such as: xfce4-terminal. Note that VcXsrv needs to be running before starting WSL.
+
+References:
+
+* [On high resolution monitor, X apps are blurry](https://www.reddit.com/r/bashonubuntuonwindows/comments/7s3jav/on_high_resolution_monitor_x_apps_are_blurry/)
+* [VcXsrv Windows X Server Wiki](https://sourceforge.net/p/vcxsrv/wiki/Using%20VcXsrv%20Windows%20X%20Server/)
 
 ## Fcitx
 Install fcitx5: `sudo apt install fcitx5 fcitx5-chinese-addons`
@@ -111,3 +116,48 @@ In .bashrc, add:
 export HOST_IP="$(ip route |awk '/^default/{print $3}')"
 export PULSE_SERVER="tcp:$HOST_IP"
 ```
+
+
+## Forwarding WSL ports to Windows
+First of all, make sure ifconfig is installed in your WSL Linux distro. Then write a PowerShell script for starting port forwarding, and save it to C:\Users\<User>\Bridge-WslPorts.ps1:
+
+```powershell
+$ports = @(80, 443, 10000, 3000, 5000);
+
+$wslAddress = bash.exe -c "ifconfig eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'"
+
+if ($wslAddress -match '^(\d{1,3}\.){3}\d{1,3}$') {
+  Write-Host "WSL IP address: $wslAddress" -ForegroundColor Green
+  Write-Host "Ports: $ports" -ForegroundColor Green
+}
+else {
+  Write-Host "Error: Could not find WSL IP address." -ForegroundColor Red
+  exit
+}
+
+$listenAddress = '0.0.0.0';
+
+foreach ($port in $ports) {
+  Invoke-Expression "netsh interface portproxy delete v4tov4 listenport=$port listenaddress=$listenAddress";
+  Invoke-Expression "netsh interface portproxy add v4tov4 listenport=$port listenaddress=$listenAddress connectport=$port connectaddress=$wslAddress";
+}
+
+$fireWallDisplayName = 'WSL Port Forwarding';
+$portsStr = $ports -join ",";
+
+Invoke-Expression "Remove-NetFireWallRule -DisplayName $fireWallDisplayName";
+Invoke-Expression "New-NetFireWallRule -DisplayName $fireWallDisplayName -Direction Outbound -LocalPort $portsStr -Action Allow -Protocol TCP";
+Invoke-Expression "New-NetFireWallRule -DisplayName $fireWallDisplayName -Direction Inbound -LocalPort $portsStr -Action Allow -Protocol TCP";
+```
+
+Open PowerShell and register a scheduled task to run the script on Windows boot:
+
+```powershell
+$a = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File `"C:\Users\<User>\Bridge-WslPorts.ps1`" -WindowStyle Hidden -ExecutionPolicy Bypass"
+$t = New-ScheduledTaskTrigger -AtLogon
+$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$p = New-ScheduledTaskPrincipal -GroupId "BUILTIN\Administrators" -RunLevel Highest
+Register-ScheduledTask -TaskName "WSL2PortsBridge" -Action $a -Trigger $t -Settings $s -Principal $p
+```
+
+Now port forwarding will be started each time you start Windows.
