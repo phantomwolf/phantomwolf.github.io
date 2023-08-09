@@ -122,7 +122,7 @@ export PULSE_SERVER="tcp:$HOST_IP"
 First of all, make sure ifconfig is installed in your WSL Linux distro. Then write a PowerShell script for starting port forwarding, and save it to C:\Users\<User>\Bridge-WslPorts.ps1:
 
 ```powershell
-$ports = @(80, 443, 10000, 3000, 5000);
+$ports = @(80, 443, 8080, 3000, 3128, 5432);
 
 $wslAddress = bash.exe -c "ifconfig eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}'"
 
@@ -145,9 +145,9 @@ foreach ($port in $ports) {
 $fireWallDisplayName = 'WSL Port Forwarding';
 $portsStr = $ports -join ",";
 
-Invoke-Expression "Remove-NetFireWallRule -DisplayName $fireWallDisplayName";
-Invoke-Expression "New-NetFireWallRule -DisplayName $fireWallDisplayName -Direction Outbound -LocalPort $portsStr -Action Allow -Protocol TCP";
-Invoke-Expression "New-NetFireWallRule -DisplayName $fireWallDisplayName -Direction Inbound -LocalPort $portsStr -Action Allow -Protocol TCP";
+Invoke-Expression "Remove-NetFireWallRule -DisplayName '$fireWallDisplayName'";
+Invoke-Expression "New-NetFireWallRule -DisplayName '$fireWallDisplayName' -Direction Outbound -LocalPort $portsStr -Action Allow -Protocol TCP";
+Invoke-Expression "New-NetFireWallRule -DisplayName '$fireWallDisplayName' -Direction Inbound -LocalPort $portsStr -Action Allow -Protocol TCP";
 ```
 
 Open PowerShell and register a scheduled task to run the script on Windows boot:
